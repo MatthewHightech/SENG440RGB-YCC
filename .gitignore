@@ -1,7 +1,10 @@
 .DS_Store
 *.qcow2
-src/csc
-src/csc_arm
-src/csc_aarch64
-src/image_echo_*.data
-src/image_output_*.data
+src/rgb_to_ycc/csc_rgb_to_ycc
+src/rgb_to_ycc/csc_rgb_to_ycc_aarch64
+src/rgb_to_ycc/image_echo_*.data
+src/rgb_to_ycc/image_output_*.data
+src/ycc_to_rgb/csc_ycc_to_rgb
+src/ycc_to_rgb/csc_ycc_to_rgb_aarch64
+src/ycc_to_rgb/image_echo_*.data
+src/ycc_to_rgb/image_output_*.data

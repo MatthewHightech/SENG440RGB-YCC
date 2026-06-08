@@ -5,8 +5,8 @@ LDFLAGS  = -lm
 VM_USER  = student
 VM_PORT  = 2222
 
-SRCS   = CSC_main.c CSC_RGB_to_YCC.c CSC_YCC_to_RGB.c
-TARGET = csc
+SRCS   = CSC_main.c CSC_RGB_to_YCC.c
+TARGET = csc_rgb_to_ycc
 
 .PHONY: all native arm deploy clean
 
@@ -22,4 +22,4 @@ deploy: arm
 	scp -P $(VM_PORT) $(TARGET)_aarch64 $(VM_USER)@localhost:~/
 
 clean:
-	rm -f $(TARGET) $(TARGET)_arm
+	rm -f $(TARGET) $(TARGET)_aarch64 image_output_*.data image_echo_*.data
