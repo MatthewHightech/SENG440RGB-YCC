@@ -1,1 +1,7 @@
 .DS_Store
+*.qcow2
+src/csc
+src/csc_arm
+src/csc_aarch64
+src/image_echo_*.data
+src/image_output_*.data
