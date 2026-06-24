@@ -8,3 +8,4 @@ src/ycc_to_rgb/csc_ycc_to_rgb
 src/ycc_to_rgb/csc_ycc_to_rgb_aarch64
 src/ycc_to_rgb/image_echo_*.data
 src/ycc_to_rgb/image_output_*.data
+src/ycc_to_rgb/testimages/output.ppm
