@@ -1,4 +1,5 @@
 .DS_Store
+.claude/
 *.qcow2
 src/rgb_to_ycc/csc_rgb_to_ycc
 src/rgb_to_ycc/csc_rgb_to_ycc_aarch64
