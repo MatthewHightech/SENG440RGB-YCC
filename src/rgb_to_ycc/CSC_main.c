@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 // #include <string.h>
-#include <math.h>
 
 #define GLOBAL
 #include "CSC_global.h"
