@@ -192,7 +192,7 @@ static void CSC_RGB_to_YCC_neon(int row, int col) {
                       B[row + 1][col + 0], B[row + 1][col + 1]};
 
   // Build accumulator/initial value
-  Y_vec = vdupq_n_s32(((16 << K) + 1) << (K - 1));
+  Y_vec = vdupq_n_s32((16 << K) + (1 << (K - 1)));
   // Perform constant/scalar multiple to each RGC vector
   Y_vec = vmlaq_n_s32(Y_vec, R_vec, C11);
   Y_vec = vmlaq_n_s32(Y_vec, G_vec, C12);
