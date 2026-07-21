@@ -207,9 +207,9 @@ static void CSC_RGB_to_YCC_neon(int row, int col) {
   Y[row + 1][col + 1] = (uint8_t)vgetq_lane_s32(Y_vec, 3);
 
   // Cb
-  Cb_vec = vdupq_n_s32(((16 << K) + 1) << (K - 1));
-  Cb_vec = vmlaq_n_s32(Cb_vec, R_vec, C21);
-  Cb_vec = vmlaq_n_s32(Cb_vec, G_vec, C22);
+  Cb_vec = vdupq_n_s32((128 << K) + (1 << (K - 1)));
+  Cb_vec = vmlsq_n_s32(Cb_vec, R_vec, C21);
+  Cb_vec = vmlsq_n_s32(Cb_vec, G_vec, C22);
   Cb_vec = vmlaq_n_s32(Cb_vec, B_vec, C23);
   Cb_vec = vshrq_n_s32(Cb_vec, K);
 
@@ -219,10 +219,10 @@ static void CSC_RGB_to_YCC_neon(int row, int col) {
   Cb[row + 1][col + 1] = (uint8_t)vgetq_lane_s32(Cb_vec, 3);
 
   // Cr
-  Cr_vec = vdupq_n_s32(((16 << K) + 1) << (K - 1));
+  Cr_vec = vdupq_n_s32((128 << K) + (1 << (K - 1)));
   Cr_vec = vmlaq_n_s32(Cr_vec, R_vec, C31);
-  Cr_vec = vmlaq_n_s32(Cr_vec, G_vec, C32);
-  Cr_vec = vmlaq_n_s32(Cr_vec, B_vec, C33);
+  Cr_vec = vmlsq_n_s32(Cr_vec, G_vec, C32);
+  Cr_vec = vmlsq_n_s32(Cr_vec, B_vec, C33);
   Cr_vec = vshrq_n_s32(Cr_vec, K);
 
   Cr[row + 0][col + 0] = (uint8_t)vgetq_lane_s32(Cr_vec, 0);
