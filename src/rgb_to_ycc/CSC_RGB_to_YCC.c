@@ -213,22 +213,12 @@ static void CSC_RGB_to_YCC_neon(int row, int col) {
   Cb_vec = vmlaq_n_s32(Cb_vec, B_vec, C23);
   Cb_vec = vshrq_n_s32(Cb_vec, K);
 
-  Cb[row + 0][col + 0] = (uint8_t)vgetq_lane_s32(Cb_vec, 0);
-  Cb[row + 0][col + 1] = (uint8_t)vgetq_lane_s32(Cb_vec, 1);
-  Cb[row + 1][col + 0] = (uint8_t)vgetq_lane_s32(Cb_vec, 2);
-  Cb[row + 1][col + 1] = (uint8_t)vgetq_lane_s32(Cb_vec, 3);
-
   // Cr
   Cr_vec = vdupq_n_s32((128 << K) + (1 << (K - 1)));
   Cr_vec = vmlaq_n_s32(Cr_vec, R_vec, C31);
   Cr_vec = vmlsq_n_s32(Cr_vec, G_vec, C32);
   Cr_vec = vmlsq_n_s32(Cr_vec, B_vec, C33);
   Cr_vec = vshrq_n_s32(Cr_vec, K);
-
-  Cr[row + 0][col + 0] = (uint8_t)vgetq_lane_s32(Cr_vec, 0);
-  Cr[row + 0][col + 1] = (uint8_t)vgetq_lane_s32(Cr_vec, 1);
-  Cr[row + 1][col + 0] = (uint8_t)vgetq_lane_s32(Cr_vec, 2);
-  Cr[row + 1][col + 1] = (uint8_t)vgetq_lane_s32(Cr_vec, 3);
 
   Cb[row >> 1][col >> 1] = chrominance_downsample(
       (uint8_t)vgetq_lane_s32(Cb_vec, 0), (uint8_t)vgetq_lane_s32(Cb_vec, 1),
