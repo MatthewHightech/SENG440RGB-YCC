@@ -17,7 +17,7 @@ native: $(SRCS)
 	$(CC_HOST) $(CFLAGS) -o $(TARGET) $(SRCS) $(LDFLAGS)
 
 arm: $(SRCS)
-	$(CC_ARM) $(CFLAGS) -o $(TARGET)_aarch64 $(SRCS) $(LDFLAGS)
+	$(CC_ARM) $(CFLAGS) -march=armv8-a+simd -o $(TARGET)_aarch64 $(SRCS) $(LDFLAGS)
 
 deploy: arm
 	scp -P $(VM_PORT) $(TARGET)_aarch64 $(VM_USER)@localhost:~/

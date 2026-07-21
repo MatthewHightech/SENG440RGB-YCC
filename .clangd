@@ -1,0 +1,5 @@
+CompileFlags:
+  Add:
+    - --target=aarch64-linux-gnu
+    - -march=armv8-a+simd
+    - --sysroot=/usr/aarch64-linux-gnu
