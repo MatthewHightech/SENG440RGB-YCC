@@ -12,4 +12,5 @@ src/ycc_to_rgb/image_output_*.data
 src/ycc_to_rgb/testimages/output.ppm
 src/ycc_to_rgb/metrics/
 src/ycc_to_rgb/cachegrind.out.*
+src/ycc_to_rgb/*.dSYM/
 

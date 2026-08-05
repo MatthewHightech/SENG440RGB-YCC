@@ -6,16 +6,18 @@ LDFLAGS  = -lm
 VM_USER  = student
 VM_PORT  = 2222
 
-SRCS     = CSC_main.c CSC_YCC_to_RGB.c ../rgb_to_ycc/CSC_RGB_to_YCC.c
+SRCS     = CSC_main.c CSC_harness.c CSC_YCC_to_RGB.c ../rgb_to_ycc/CSC_RGB_to_YCC.c
 TARGET   = csc_ycc_to_rgb
 TEST_IN  = testimages/input.ppm
 TEST_OUT = testimages/output.ppm
 SAMPLE   = ../rgb_to_ycc/image_input_RGB_64_48_03.data
+WALL_CSV = metrics/walltime.csv
 IMG      ?=
 LABEL    ?= baseline
+ITERS    ?= 1000
 
-.PHONY: all native native-profile arm deploy clean test prepare-test-image \
-        cachegrind cachegrind-annotate
+.PHONY: all native native-profile arm deploy clean test bench measure \
+        prepare-test-image cachegrind cachegrind-annotate
 
 all: native
 
@@ -32,14 +34,36 @@ deploy: arm
 	scp -P $(VM_PORT) $(TARGET)_aarch64 $(VM_USER)@localhost:~/
 
 test: native $(TEST_IN)
-	./$(TARGET) $(TEST_IN) $(TEST_OUT)
+	./$(TARGET) $(TEST_IN) $(TEST_OUT) --label $(LABEL) --iters $(ITERS) \
+		--metrics $(WALL_CSV)
 	@echo "Open $(TEST_OUT) to inspect the round-trip result."
+
+# Secondary metric: wall-time ONLY (no Valgrind). Accurate on host / ARM VM.
+bench: native $(TEST_IN)
+	@echo "=== Step 1/1: wall-time bench (no Cachegrind) ==="
+	./$(TARGET) $(TEST_IN) $(TEST_OUT) --label $(LABEL) --iters $(ITERS) \
+		--metrics $(WALL_CSV)
+	@echo "Wall-time CSV: $(WALL_CSV)"
+
+# Primary (Cachegrind Ir/misses) + secondary (wall-time) in one command.
+# Wall-time runs FIRST outside Valgrind; Cachegrind runs SECOND.
+measure: native-profile $(TEST_IN)
+	@echo "=== Step 1/2: wall-time (no Cachegrind) ==="
+	./$(TARGET) $(TEST_IN) $(TEST_OUT) --label $(LABEL) --iters $(ITERS) \
+		--metrics $(WALL_CSV)
+	@echo
+	@echo "=== Step 2/2: Cachegrind (Ir + cache misses) ==="
+	LABEL=$(LABEL) BINARY=./$(TARGET) INPUT=$(TEST_IN) OUTPUT=$(TEST_OUT) \
+		ITERS=1 bash scripts/run_cachegrind.sh
+	@echo
+	@echo "Done. Secondary wall-time: $(WALL_CSV)"
+	@echo "Primary Cachegrind:       metrics/cachegrind.csv"
 
 # Primary project metrics: instruction count (Ir) + cache misses.
 # Must be run where Valgrind is installed (Linux ARM VM recommended).
 cachegrind: native-profile $(TEST_IN)
 	LABEL=$(LABEL) BINARY=./$(TARGET) INPUT=$(TEST_IN) OUTPUT=$(TEST_OUT) \
-		bash scripts/run_cachegrind.sh
+		ITERS=1 bash scripts/run_cachegrind.sh
 
 cachegrind-annotate:
 	@latest=$$(ls -t metrics/cachegrind/*.out 2>/dev/null | head -1); \

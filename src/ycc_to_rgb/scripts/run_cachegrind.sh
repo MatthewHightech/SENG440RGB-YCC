@@ -11,6 +11,8 @@ INPUT="${INPUT:-testimages/input.ppm}"
 OUTPUT="${OUTPUT:-testimages/output.ppm}"
 OUTDIR="${OUTDIR:-metrics/cachegrind}"
 CSV="${CSV:-metrics/cachegrind.csv}"
+# One conversion under Cachegrind: Ir/misses stay comparable and runs finish faster.
+ITERS="${ITERS:-1}"
 
 if ! command -v valgrind >/dev/null 2>&1; then
   cat <<'EOF' >&2
@@ -49,15 +51,18 @@ ANNOTATE="$OUTDIR/${SAFE_LABEL}-${STAMP}.annotate.txt"
 echo "Running Cachegrind..."
 echo "  binary: $BINARY"
 echo "  label:  $LABEL"
+echo "  iters:  $ITERS (use 1 under Cachegrind)"
 echo "  out:    $OUTFILE"
 
 # --branch-sim=no keeps the run focused on instruction + cache metrics.
+# Wall-time printed by the binary under Valgrind is NOT meaningful.
 valgrind \
   --tool=cachegrind \
   --cache-sim=yes \
   --branch-sim=no \
   --cachegrind-out-file="$OUTFILE" \
-  "$BINARY" "$INPUT" "$OUTPUT"
+  "$BINARY" "$INPUT" "$OUTPUT" --iters "$ITERS" --label "$LABEL" \
+  --metrics /dev/null
 
 echo
 echo "Writing annotated report to $ANNOTATE"
