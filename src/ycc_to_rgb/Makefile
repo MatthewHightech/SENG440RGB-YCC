@@ -1,6 +1,7 @@
 CC_HOST  = gcc
 CC_ARM   = aarch64-linux-gnu-gcc
-CFLAGS   = -O2 -Wall
+# -g is required so cg_annotate can map counts back to functions/lines.
+CFLAGS   = -O2 -Wall -g
 LDFLAGS  = -lm
 VM_USER  = student
 VM_PORT  = 2222
@@ -11,13 +12,18 @@ TEST_IN  = testimages/input.ppm
 TEST_OUT = testimages/output.ppm
 SAMPLE   = ../rgb_to_ycc/image_input_RGB_64_48_03.data
 IMG      ?=
+LABEL    ?= baseline
 
-.PHONY: all native arm deploy clean test prepare-test-image
+.PHONY: all native native-profile arm deploy clean test prepare-test-image \
+        cachegrind cachegrind-annotate
 
 all: native
 
 native: $(SRCS)
 	$(CC_HOST) $(CFLAGS) -o $(TARGET) $(SRCS) $(LDFLAGS)
+
+# Same as native; kept as an alias so "profile build" is explicit in docs.
+native-profile: native
 
 arm: $(SRCS)
 	$(CC_ARM) $(CFLAGS) -o $(TARGET)_aarch64 $(SRCS) $(LDFLAGS)
@@ -28,6 +34,21 @@ deploy: arm
 test: native $(TEST_IN)
 	./$(TARGET) $(TEST_IN) $(TEST_OUT)
 	@echo "Open $(TEST_OUT) to inspect the round-trip result."
+
+# Primary project metrics: instruction count (Ir) + cache misses.
+# Must be run where Valgrind is installed (Linux ARM VM recommended).
+cachegrind: native-profile $(TEST_IN)
+	LABEL=$(LABEL) BINARY=./$(TARGET) INPUT=$(TEST_IN) OUTPUT=$(TEST_OUT) \
+		bash scripts/run_cachegrind.sh
+
+cachegrind-annotate:
+	@latest=$$(ls -t metrics/cachegrind/*.out 2>/dev/null | head -1); \
+	if [ -z "$$latest" ]; then \
+		echo "No cachegrind .out files in metrics/cachegrind/"; \
+		exit 1; \
+	fi; \
+	echo "Annotating $$latest"; \
+	cg_annotate --auto=yes "$$latest" | less
 
 prepare-test-image:
 	@mkdir -p testimages
@@ -43,3 +64,4 @@ $(TEST_IN):
 
 clean:
 	rm -f $(TARGET) $(TARGET)_aarch64 image_output_*.data image_echo_*.data
+	rm -rf metrics/cachegrind
