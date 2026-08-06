@@ -11,3 +11,9 @@ src/ycc_to_rgb/csc_ycc_to_rgb_aarch64
 src/ycc_to_rgb/image_echo_*.data
 src/ycc_to_rgb/image_output_*.data
 src/ycc_to_rgb/testimages/output.ppm
+STUDY_GUIDE.md
+src/rgb_to_ycc/Makefile
+final_report_template.txt
+src/rgb_to_ycc/*.s
+src/rgb_to_ycc/csc_*
+TeachingResources/LESSON_103_CSC/C/a.out
