@@ -6,7 +6,15 @@ LDFLAGS  = -lm
 VM_USER  = student
 VM_PORT  = 2222
 
-SRCS     = CSC_main.c CSC_harness.c CSC_YCC_to_RGB.c ../rgb_to_ycc/CSC_RGB_to_YCC.c
+# ARM32 (armhf / armv7) needs -mfpu=neon for <arm_neon.h> intrinsics.
+# AArch64 has NEON always-on, so no -mfpu flag there.
+UNAME_M := $(shell uname -m 2>/dev/null)
+ifneq (,$(filter armv7l armv6l arm,$(UNAME_M)))
+  CFLAGS += -mfpu=neon
+endif
+
+# Local conversion sources only — do not pull from ../rgb_to_ycc/.
+SRCS     = CSC_main.c CSC_harness.c CSC_RGB_to_YCC.c CSC_YCC_to_RGB.c
 TARGET   = csc_ycc_to_rgb
 TEST_IN  = testimages/input.ppm
 TEST_OUT = testimages/output.ppm
