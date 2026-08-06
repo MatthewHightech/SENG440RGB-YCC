@@ -5,6 +5,7 @@ src/rgb_to_ycc/csc_rgb_to_ycc
 src/rgb_to_ycc/csc_rgb_to_ycc_aarch64
 src/rgb_to_ycc/image_echo_*.data
 src/rgb_to_ycc/image_output_*.data
+src/rgb_to_ycc/profile_results/
 src/ycc_to_rgb/csc_ycc_to_rgb
 src/ycc_to_rgb/csc_ycc_to_rgb_aarch64
 src/ycc_to_rgb/image_echo_*.data
@@ -14,3 +15,9 @@ src/ycc_to_rgb/metrics/
 src/ycc_to_rgb/cachegrind.out.*
 src/ycc_to_rgb/*.dSYM/
 
+STUDY_GUIDE.md
+src/rgb_to_ycc/Makefile
+final_report_template.txt
+src/rgb_to_ycc/*.s
+src/rgb_to_ycc/csc_*
+TeachingResources/LESSON_103_CSC/C/a.out

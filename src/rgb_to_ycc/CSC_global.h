@@ -2,13 +2,23 @@
 
 #define K 8 // bitwidth
 #define UNITY (1 << K)
+#ifndef IMAGE_ROW_SIZE
 #define IMAGE_ROW_SIZE 64
+#endif
+#ifndef IMAGE_COL_SIZE
 #define IMAGE_COL_SIZE 48
+#endif
+#ifndef TILE_SIZE
+#define TILE_SIZE 16
+#endif
 
 // RGB_to_YCC_ROUTINE
 //     1 for CSC_RGB_to_YCC_brute_force_float()
 //     2 for CSC_RGB_to_YCC_brute_force_int()
-#define RGB_to_YCC_ROUTINE 1
+//     3 for CSC_RGB_to_YCC_neon()
+#ifndef RGB_to_YCC_ROUTINE
+#define RGB_to_YCC_ROUTINE 3
+#endif
 
 // YCC_to_RGB_ROUTINE
 //     1 for CSC_YCC_to_RGB_brute_force_float()
@@ -19,7 +29,9 @@
 //     0 for returning zero (no chrominance)
 //     1 for discarding three pixels and keeping one
 //     2 for averaging four pixels
-#define CHROMINANCE_DOWNSAMPLING_MODE 1
+#ifndef CHROMINANCE_DOWNSAMPLING_MODE
+#define CHROMINANCE_DOWNSAMPLING_MODE 2
+#endif
 
 // CHROMINANCE_UPSAMPLING_MODE = 
 //     0 for returning zero (no chrominance)
