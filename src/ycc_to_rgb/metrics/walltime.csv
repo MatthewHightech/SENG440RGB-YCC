@@ -1,0 +1,2 @@
+timestamp,label,input,rows,cols,rgb_to_ycc_routine,ycc_to_rgb_routine,downsample_mode,upsample_mode,iterations,rgb_to_ycc_ms_mean,ycc_to_rgb_ms_mean,ycc_to_rgb_ms_min,total_ms_mean,mpix_per_s,ns_per_pixel,diff_max,mean_abs_delta
+2026-08-06T11:23:10,baseline,testimages/input.ppm,64,48,1,1,1,1,1000,0.140796,3.206900,2.954070,3.347696,0.957935,1043.913,152,3.229167
