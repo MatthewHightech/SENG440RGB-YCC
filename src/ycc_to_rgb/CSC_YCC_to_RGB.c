@@ -46,8 +46,7 @@ static void CSC_YCC_to_RGB_brute_force_float( int row, int col) {
   float G_pixel_00, G_pixel_01, G_pixel_10, G_pixel_11;
   float B_pixel_00, B_pixel_01, B_pixel_10, B_pixel_11;
 
-  // Upsample Cb and Cr into Cb_temp and Cr_temp
-  chrominance_array_upsample();
+  // Cb_temp / Cr_temp must already be filled by chrominance_array_upsample()
 
   R_pixel_00 =   1.164*(Y[row+0][col+0] - 16.0)
                + 1.596*(Cr_temp[row+0][col+0] - 128.0);
@@ -126,8 +125,7 @@ static void CSC_YCC_to_RGB_brute_force_int( int row, int col) {
   int Cb_pixel_00, Cb_pixel_01, Cb_pixel_10, Cb_pixel_11;
   int Cr_pixel_00, Cr_pixel_01, Cr_pixel_10, Cr_pixel_11;
 
-  // Upsample Cb and Cr into Cb_temp and Cr_temp
-  chrominance_array_upsample();
+  // Cb_temp / Cr_temp must already be filled by chrominance_array_upsample()
 
   Y_pixel_00 = (int)Y[row+0][col+0];
   Y_pixel_01 = (int)Y[row+0][col+1];
@@ -351,7 +349,12 @@ static void chrominance_array_upsample( void) {
 // =======
 void CSC_YCC_to_RGB( void) {
   int row, col; // indices for row and column
-//
+
+  // Expand half-res Cb/Cr once, then convert every 2x2 block.
+  if( YCC_to_RGB_ROUTINE == 1 || YCC_to_RGB_ROUTINE == 2) {
+    chrominance_array_upsample();
+  }
+
   for( row=0; row<IMAGE_ROW_SIZE; row+=2) {
     for( col=0; col<IMAGE_COL_SIZE; col+=2) { 
       //printf( "\n[row,col] = [%02i,%02i]\n\n", row, col);
