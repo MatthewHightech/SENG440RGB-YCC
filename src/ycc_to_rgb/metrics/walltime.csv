@@ -1,3 +1,4 @@
 timestamp,label,input,rows,cols,rgb_to_ycc_routine,ycc_to_rgb_routine,downsample_mode,upsample_mode,iterations,rgb_to_ycc_ms_mean,ycc_to_rgb_ms_mean,ycc_to_rgb_ms_min,total_ms_mean,mpix_per_s,ns_per_pixel,diff_max,mean_abs_delta
 2026-08-06T11:33:06,baseline,testimages/input.ppm,64,48,1,1,1,1,1000,0.145891,3.262481,2.973984,3.408372,0.941615,1062.006,152,3.229167
-2026-08-07T11:25:54,brute_force_int,testimages/input.ppm,64,48,2,2,1,1,1000,0.025632,2.376448,2.200940,2.402079,1.292686,773.583,229,100.4062502026-08-07T11:39:35,upsample_bug_fix,testimages/input.ppm,64,48,2,2,1,1,1000,0.025526,0.011610,0.010000,0.037136,264.589000,3.779,229,100.406250
+2026-08-07T11:25:54,brute_force_int,testimages/input.ppm,64,48,2,2,1,1,1000,0.025632,2.376448,2.200940,2.402079,1.292686,773.583,229,100.406250
+2026-08-07T11:39:35,upsample_bug_fix,testimages/input.ppm,64,48,2,2,1,1,1000,0.025526,0.011610,0.010000,0.037136,264.589000,3.779,229,100.406250
