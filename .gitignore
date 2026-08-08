@@ -5,7 +5,7 @@ src/rgb_to_ycc/csc_rgb_to_ycc
 src/rgb_to_ycc/csc_rgb_to_ycc_aarch64
 src/rgb_to_ycc/image_echo_*.data
 src/rgb_to_ycc/image_output_*.data
-src/rgb_to_ycc/profile_results/
+src/rgb_to_ycc/reports/
 src/ycc_to_rgb/csc_ycc_to_rgb
 src/ycc_to_rgb/csc_ycc_to_rgb_aarch64
 src/ycc_to_rgb/image_echo_*.data
@@ -15,6 +15,8 @@ src/ycc_to_rgb/cachegrind.out.*
 src/ycc_to_rgb/*.dSYM/
 
 STUDY_GUIDE.md
+REPORT_PLAN.md
+SENG 440 - Final Report.md
 src/rgb_to_ycc/Makefile
 final_report_template.txt
 src/rgb_to_ycc/*.s
