@@ -9,6 +9,13 @@
 
 // private data
 
+// LUT tables: 9 arrays of 256 entries, one per (output, input channel) pair.
+// Negative coefficients stored negative so compute can just add, no
+// mixed add/subtract per pixel.
+static int lut_Y_R[256],  lut_Y_G[256],  lut_Y_B[256];
+static int lut_Cb_R[256], lut_Cb_G[256], lut_Cb_B[256];
+static int lut_Cr_R[256], lut_Cr_G[256], lut_Cr_B[256];
+
 // private prototypes
 // =======
 static void CSC_RGB_to_YCC_brute_force_float(int row, int col);
@@ -21,6 +28,15 @@ static void CSC_RGB_to_YCC_neon(int row, int col);
 
 // =======
 static void CSC_RGB_to_YCC_neon_tiled(void);
+
+// =======
+static void lut_init(void);
+
+// =======
+static void CSC_RGB_to_YCC_lut(int row, int col);
+
+// =======
+static void CSC_RGB_to_YCC_neon_v2(void);
 
 // =======
 static uint8_t chrominance_downsample(uint8_t C_pixel_1, uint8_t C_pixel_2,
@@ -239,12 +255,148 @@ static void CSC_RGB_to_YCC_neon_tiled(void) {
     for (tile_col = 0; tile_col < IMAGE_COL_SIZE; tile_col += TILE_SIZE) {
       for (row = tile_row; row < tile_row + TILE_SIZE; row += 2) {
         for (col = tile_col; col < tile_col + TILE_SIZE; col += 2) {
-          // TODO: tiled NEON kernel
+          CSC_RGB_to_YCC_neon(row, col);
         }
       }
     }
   }
 } // END of CSC_RGB_to_YCC_neon_tiled()
+
+// =======
+static void lut_init(void) {
+  int i;
+  for (i = 0; i < 256; i++) {
+    lut_Y_R[i]  =  C11 * i;
+    lut_Y_G[i]  =  C12 * i;
+    lut_Y_B[i]  =  C13 * i;
+    lut_Cb_R[i] = -C21 * i;
+    lut_Cb_G[i] = -C22 * i;
+    lut_Cb_B[i] =  C23 * i;
+    lut_Cr_R[i] =  C31 * i;
+    lut_Cr_G[i] = -C32 * i;
+    lut_Cr_B[i] = -C33 * i;
+  }
+} // END of lut_init()
+
+// =======
+static void CSC_RGB_to_YCC_lut(int row, int col) {
+  int r00 = R[row+0][col+0], g00 = G[row+0][col+0], b00 = B[row+0][col+0];
+  int r01 = R[row+0][col+1], g01 = G[row+0][col+1], b01 = B[row+0][col+1];
+  int r10 = R[row+1][col+0], g10 = G[row+1][col+0], b10 = B[row+1][col+0];
+  int r11 = R[row+1][col+1], g11 = G[row+1][col+1], b11 = B[row+1][col+1];
+
+  int bias_Y = (16  << K) + (1 << (K-1));
+  int bias_C = (128 << K) + (1 << (K-1));
+
+  Y[row+0][col+0] = (uint8_t)((bias_Y + lut_Y_R[r00] + lut_Y_G[g00] + lut_Y_B[b00]) >> K);
+  Y[row+0][col+1] = (uint8_t)((bias_Y + lut_Y_R[r01] + lut_Y_G[g01] + lut_Y_B[b01]) >> K);
+  Y[row+1][col+0] = (uint8_t)((bias_Y + lut_Y_R[r10] + lut_Y_G[g10] + lut_Y_B[b10]) >> K);
+  Y[row+1][col+1] = (uint8_t)((bias_Y + lut_Y_R[r11] + lut_Y_G[g11] + lut_Y_B[b11]) >> K);
+
+  uint8_t Cb00 = (uint8_t)((bias_C + lut_Cb_R[r00] + lut_Cb_G[g00] + lut_Cb_B[b00]) >> K);
+  uint8_t Cb01 = (uint8_t)((bias_C + lut_Cb_R[r01] + lut_Cb_G[g01] + lut_Cb_B[b01]) >> K);
+  uint8_t Cb10 = (uint8_t)((bias_C + lut_Cb_R[r10] + lut_Cb_G[g10] + lut_Cb_B[b10]) >> K);
+  uint8_t Cb11 = (uint8_t)((bias_C + lut_Cb_R[r11] + lut_Cb_G[g11] + lut_Cb_B[b11]) >> K);
+
+  uint8_t Cr00 = (uint8_t)((bias_C + lut_Cr_R[r00] + lut_Cr_G[g00] + lut_Cr_B[b00]) >> K);
+  uint8_t Cr01 = (uint8_t)((bias_C + lut_Cr_R[r01] + lut_Cr_G[g01] + lut_Cr_B[b01]) >> K);
+  uint8_t Cr10 = (uint8_t)((bias_C + lut_Cr_R[r10] + lut_Cr_G[g10] + lut_Cr_B[b10]) >> K);
+  uint8_t Cr11 = (uint8_t)((bias_C + lut_Cr_R[r11] + lut_Cr_G[g11] + lut_Cr_B[b11]) >> K);
+
+  Cb[row>>1][col>>1] = chrominance_downsample(Cb00, Cb01, Cb10, Cb11);
+  Cr[row>>1][col>>1] = chrominance_downsample(Cr00, Cr01, Cr10, Cr11);
+} // END of CSC_RGB_to_YCC_lut()
+
+// =======
+static void CSC_RGB_to_YCC_neon_v2(void) {
+  int row, col;
+  for (row = 0; row < IMAGE_ROW_SIZE; row += 2) {
+    for (col = 0; col < IMAGE_COL_SIZE; col += 8) {
+
+      // Load 8 consecutive pixels per channel per row, 1 NEON instruction
+      uint8x8_t r8_r0 = vld1_u8(&R[row][col]);
+      uint8x8_t g8_r0 = vld1_u8(&G[row][col]);
+      uint8x8_t b8_r0 = vld1_u8(&B[row][col]);
+      uint8x8_t r8_r1 = vld1_u8(&R[row + 1][col]);
+      uint8x8_t g8_r1 = vld1_u8(&G[row + 1][col]);
+      uint8x8_t b8_r1 = vld1_u8(&B[row + 1][col]);
+
+      // Widen to 16-bit so products don't overflow
+      uint16x8_t r_r0 = vmovl_u8(r8_r0);
+      uint16x8_t g_r0 = vmovl_u8(g8_r0);
+      uint16x8_t b_r0 = vmovl_u8(b8_r0);
+      uint16x8_t r_r1 = vmovl_u8(r8_r1);
+      uint16x8_t g_r1 = vmovl_u8(g8_r1);
+      uint16x8_t b_r1 = vmovl_u8(b8_r1);
+
+      // Y: 8 pixels per row in parallel, narrow and store in one NEON store
+      uint16x8_t y_r0 = vdupq_n_u16((16 << K) + (1 << (K - 1)));
+      y_r0 = vmlaq_n_u16(y_r0, r_r0, C11);
+      y_r0 = vmlaq_n_u16(y_r0, g_r0, C12);
+      y_r0 = vmlaq_n_u16(y_r0, b_r0, C13);
+      vst1_u8(&Y[row][col], vmovn_u16(vshrq_n_u16(y_r0, K)));
+
+      uint16x8_t y_r1 = vdupq_n_u16((16 << K) + (1 << (K - 1)));
+      y_r1 = vmlaq_n_u16(y_r1, r_r1, C11);
+      y_r1 = vmlaq_n_u16(y_r1, g_r1, C12);
+      y_r1 = vmlaq_n_u16(y_r1, b_r1, C13);
+      vst1_u8(&Y[row + 1][col], vmovn_u16(vshrq_n_u16(y_r1, K)));
+
+      // Cb: compute 8 values per row, narrow to u8
+      uint16x8_t cb_r0 = vdupq_n_u16((128 << K) + (1 << (K - 1)));
+      cb_r0 = vmlsq_n_u16(cb_r0, r_r0, C21);
+      cb_r0 = vmlsq_n_u16(cb_r0, g_r0, C22);
+      cb_r0 = vmlaq_n_u16(cb_r0, b_r0, C23);
+      uint8x8_t cb_r0_u8 = vmovn_u16(vshrq_n_u16(cb_r0, K));
+
+      uint16x8_t cb_r1 = vdupq_n_u16((128 << K) + (1 << (K - 1)));
+      cb_r1 = vmlsq_n_u16(cb_r1, r_r1, C21);
+      cb_r1 = vmlsq_n_u16(cb_r1, g_r1, C22);
+      cb_r1 = vmlaq_n_u16(cb_r1, b_r1, C23);
+      uint8x8_t cb_r1_u8 = vmovn_u16(vshrq_n_u16(cb_r1, K));
+
+      // Cr: compute 8 values per row, narrow to u8
+      uint16x8_t cr_r0 = vdupq_n_u16((128 << K) + (1 << (K - 1)));
+      cr_r0 = vmlaq_n_u16(cr_r0, r_r0, C31);
+      cr_r0 = vmlsq_n_u16(cr_r0, g_r0, C32);
+      cr_r0 = vmlsq_n_u16(cr_r0, b_r0, C33);
+      uint8x8_t cr_r0_u8 = vmovn_u16(vshrq_n_u16(cr_r0, K));
+
+      uint16x8_t cr_r1 = vdupq_n_u16((128 << K) + (1 << (K - 1)));
+      cr_r1 = vmlaq_n_u16(cr_r1, r_r1, C31);
+      cr_r1 = vmlsq_n_u16(cr_r1, g_r1, C32);
+      cr_r1 = vmlsq_n_u16(cr_r1, b_r1, C33);
+      uint8x8_t cr_r1_u8 = vmovn_u16(vshrq_n_u16(cr_r1, K));
+
+      // Downsample: 4 x 2×2 blocks per strip
+      Cb[row>>1][(col>>1)+0] = chrominance_downsample(
+          vget_lane_u8(cb_r0_u8,0), vget_lane_u8(cb_r0_u8,1),
+          vget_lane_u8(cb_r1_u8,0), vget_lane_u8(cb_r1_u8,1));
+      Cb[row>>1][(col>>1)+1] = chrominance_downsample(
+          vget_lane_u8(cb_r0_u8,2), vget_lane_u8(cb_r0_u8,3),
+          vget_lane_u8(cb_r1_u8,2), vget_lane_u8(cb_r1_u8,3));
+      Cb[row>>1][(col>>1)+2] = chrominance_downsample(
+          vget_lane_u8(cb_r0_u8,4), vget_lane_u8(cb_r0_u8,5),
+          vget_lane_u8(cb_r1_u8,4), vget_lane_u8(cb_r1_u8,5));
+      Cb[row>>1][(col>>1)+3] = chrominance_downsample(
+          vget_lane_u8(cb_r0_u8,6), vget_lane_u8(cb_r0_u8,7),
+          vget_lane_u8(cb_r1_u8,6), vget_lane_u8(cb_r1_u8,7));
+
+      Cr[row>>1][(col>>1)+0] = chrominance_downsample(
+          vget_lane_u8(cr_r0_u8,0), vget_lane_u8(cr_r0_u8,1),
+          vget_lane_u8(cr_r1_u8,0), vget_lane_u8(cr_r1_u8,1));
+      Cr[row>>1][(col>>1)+1] = chrominance_downsample(
+          vget_lane_u8(cr_r0_u8,2), vget_lane_u8(cr_r0_u8,3),
+          vget_lane_u8(cr_r1_u8,2), vget_lane_u8(cr_r1_u8,3));
+      Cr[row>>1][(col>>1)+2] = chrominance_downsample(
+          vget_lane_u8(cr_r0_u8,4), vget_lane_u8(cr_r0_u8,5),
+          vget_lane_u8(cr_r1_u8,4), vget_lane_u8(cr_r1_u8,5));
+      Cr[row>>1][(col>>1)+3] = chrominance_downsample(
+          vget_lane_u8(cr_r0_u8,6), vget_lane_u8(cr_r0_u8,7),
+          vget_lane_u8(cr_r1_u8,6), vget_lane_u8(cr_r1_u8,7));
+    }
+  }
+} // END of CSC_RGB_to_YCC_neon_v2()
 
 // =======
 static uint8_t chrominance_downsample(uint8_t C_pixel_00, uint8_t C_pixel_01,
@@ -271,10 +423,21 @@ static uint8_t chrominance_downsample(uint8_t C_pixel_00, uint8_t C_pixel_01,
 // =======
 void CSC_RGB_to_YCC(void) {
   int row, col; // indices for row and column
+  static int lut_ready = 0;
 
   if (RGB_to_YCC_ROUTINE == 4) {
     CSC_RGB_to_YCC_neon_tiled();
     return;
+  }
+
+  if (RGB_to_YCC_ROUTINE == 6) {
+    CSC_RGB_to_YCC_neon_v2();
+    return;
+  }
+
+  if (RGB_to_YCC_ROUTINE == 5 && !lut_ready) {
+    lut_init();
+    lut_ready = 1;
   }
 
   for (row = 0; row < IMAGE_ROW_SIZE; row += 2) {
@@ -291,7 +454,10 @@ void CSC_RGB_to_YCC(void) {
       case 3:
         CSC_RGB_to_YCC_neon(row, col);
         break;
-      default:
+      case 5:
+        CSC_RGB_to_YCC_lut(row, col);
+        break;
+default:
         break;
       }
     }

@@ -2,12 +2,25 @@
 
 #define K 8 // bitwidth
 #define UNITY (1 << K)
-#ifndef IMAGE_ROW_SIZE
-#define IMAGE_ROW_SIZE 64
+
+#ifdef IMAGE_SIZE_LARGE
+  #ifndef IMAGE_ROW_SIZE
+  #define IMAGE_ROW_SIZE 640
+  #endif
+  #ifndef IMAGE_COL_SIZE
+  #define IMAGE_COL_SIZE 480
+  #endif
+  #define IMAGE_ID "640_480_02"
+#else
+  #ifndef IMAGE_ROW_SIZE
+  #define IMAGE_ROW_SIZE 64
+  #endif
+  #ifndef IMAGE_COL_SIZE
+  #define IMAGE_COL_SIZE 48
+  #endif
+  #define IMAGE_ID "64_48_03"
 #endif
-#ifndef IMAGE_COL_SIZE
-#define IMAGE_COL_SIZE 48
-#endif
+
 #ifndef TILE_SIZE
 #define TILE_SIZE 16
 #endif
@@ -16,6 +29,9 @@
 //     1 for CSC_RGB_to_YCC_brute_force_float()
 //     2 for CSC_RGB_to_YCC_brute_force_int()
 //     3 for CSC_RGB_to_YCC_neon()
+//     4 for CSC_RGB_to_YCC_neon_tiled()
+//     5 for CSC_RGB_to_YCC_lut()
+//     6 for CSC_RGB_to_YCC_neon_v2()
 #ifndef RGB_to_YCC_ROUTINE
 #define RGB_to_YCC_ROUTINE 3
 #endif

@@ -4,8 +4,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-// #include <string.h>
+#include <time.h>
 
 #define GLOBAL
 #include "CSC_global.h"
@@ -21,25 +20,25 @@ int main(void) {
   FILE *f_ID_output_Cr;
   FILE *f_ID_output_RGB;
 
-  f_ID_input_RGB = fopen("./image_input_RGB_64_48_03.data", "rb");
+  f_ID_input_RGB = fopen("./image_input_RGB_" IMAGE_ID ".data", "rb");
   if (f_ID_input_RGB == NULL) {
     printf("Cannot open file.\n");
     return (1);
   }
 
-  f_ID_echo_R = fopen("./image_echo_R_64_48_03.data", "wb");
+  f_ID_echo_R = fopen("./image_echo_R_" IMAGE_ID ".data", "wb");
   if (f_ID_echo_R == NULL) {
     printf("Cannot open file.\n");
     return (1);
   }
 
-  f_ID_echo_G = fopen("./image_echo_G_64_48_03.data", "wb");
+  f_ID_echo_G = fopen("./image_echo_G_" IMAGE_ID ".data", "wb");
   if (f_ID_echo_G == NULL) {
     printf("Cannot open file.\n");
     return (1);
   }
 
-  f_ID_echo_B = fopen("./image_echo_B_64_48_03.data", "wb");
+  f_ID_echo_B = fopen("./image_echo_B_" IMAGE_ID ".data", "wb");
   if (f_ID_echo_B == NULL) {
     printf("Cannot open file.\n");
     return (1);
@@ -63,27 +62,39 @@ int main(void) {
   fclose(f_ID_input_RGB);
 
 #ifdef PROFILE_ONLY
-  for (int i = 0; i < 10000; i++)
+#ifndef PROFILE_ITERS
+#define PROFILE_ITERS 10000
+#endif
+  struct timespec t_start, t_end;
+  clock_gettime(CLOCK_MONOTONIC, &t_start);
+  for (int i = 0; i < PROFILE_ITERS; i++)
     CSC_RGB_to_YCC();
+  clock_gettime(CLOCK_MONOTONIC, &t_end);
+  double elapsed = (double)(t_end.tv_sec - t_start.tv_sec) +
+                   (double)(t_end.tv_nsec - t_start.tv_nsec) * 1e-9;
+  printf("%.6f\n", elapsed);
 #else
   CSC_RGB_to_YCC();
 #endif
 
-  f_ID_output_Y = fopen("./image_output_Y_64_48_03.data", "wb");
+  f_ID_output_Y = fopen("./image_output_Y_" IMAGE_ID ".data", "wb");
   if (f_ID_output_Y == NULL) {
-    fprintf(stderr, "Could not open %s\n", "./image_output_Y_64_48_03.data");
+    fprintf(stderr, "Could not open %s\n",
+            "./image_output_Y_" IMAGE_ID ".data");
     return (1);
   }
 
-  f_ID_output_Cb = fopen("./image_output_Cb_64_48_03.data", "wb");
+  f_ID_output_Cb = fopen("./image_output_Cb_" IMAGE_ID ".data", "wb");
   if (f_ID_output_Cb == NULL) {
-    fprintf(stderr, "Could not open %s\n", "./image_output_Cb_64_48_03.data");
+    fprintf(stderr, "Could not open %s\n",
+            "./image_output_Cb_" IMAGE_ID ".data");
     return (1);
   }
 
-  f_ID_output_Cr = fopen("./image_output_Cr_64_48_03.data", "wb");
+  f_ID_output_Cr = fopen("./image_output_Cr_" IMAGE_ID ".data", "wb");
   if (f_ID_output_Cr == NULL) {
-    fprintf(stderr, "Could not open %s\n", "./image_output_Cr_64_48_03.data");
+    fprintf(stderr, "Could not open %s\n",
+            "./image_output_Cr_" IMAGE_ID ".data");
     return (1);
   }
 
@@ -110,7 +121,7 @@ int main(void) {
   CSC_YCC_to_RGB();
 #endif
 
-  f_ID_output_RGB = fopen("./image_output_RGB_64_48_03.data", "wb");
+  f_ID_output_RGB = fopen("./image_output_RGB_" IMAGE_ID ".data", "wb");
   if (f_ID_output_RGB == NULL) {
     printf("Cannot open file.\n");
     return (1);
