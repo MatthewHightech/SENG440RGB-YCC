@@ -13,6 +13,8 @@
 // YCC_to_RGB_ROUTINE
 //     1 for CSC_YCC_to_RGB_brute_force_float()
 //     2 for CSC_YCC_to_RGB_brute_force_int()
+//     3 for CSC_YCC_to_RGB_neon_v2() -- ARM-only, overflows (see .c)
+//     4 for CSC_YCC_to_RGB_neon_v3() -- ARM-only, fixed version
 #define YCC_to_RGB_ROUTINE 2
 
 // CHROMINANCE_DOWNSAMPLING_MODE = 
