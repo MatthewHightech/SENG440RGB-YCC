@@ -30,6 +30,25 @@ else
   TEST_OUT   = testimages/output.ppm
 endif
 
+# Optional compile-time routine/mode overrides (used by run_full_suite.sh).
+# Leave empty to use defaults from CSC_global.h.
+RGB_ROUTINE      ?=
+YCC_ROUTINE      ?=
+DOWNSAMPLE_MODE  ?=
+UPSAMPLE_MODE    ?=
+ifneq ($(RGB_ROUTINE),)
+  CFLAGS += -DRGB_to_YCC_ROUTINE=$(RGB_ROUTINE)
+endif
+ifneq ($(YCC_ROUTINE),)
+  CFLAGS += -DYCC_to_RGB_ROUTINE=$(YCC_ROUTINE)
+endif
+ifneq ($(DOWNSAMPLE_MODE),)
+  CFLAGS += -DCHROMINANCE_DOWNSAMPLING_MODE=$(DOWNSAMPLE_MODE)
+endif
+ifneq ($(UPSAMPLE_MODE),)
+  CFLAGS += -DCHROMINANCE_UPSAMPLING_MODE=$(UPSAMPLE_MODE)
+endif
+
 SRCS     = CSC_main.c CSC_harness.c CSC_RGB_to_YCC.c CSC_YCC_to_RGB.c
 TARGET   = csc_full_conversion
 WALL_CSV = metrics/walltime.csv
@@ -37,7 +56,7 @@ IMG      ?=
 LABEL    ?= baseline
 ITERS    ?= 1000
 
-.PHONY: all native native-profile arm deploy clean test bench measure \
+.PHONY: all native native-profile arm deploy clean clean-bin test bench measure \
         prepare-test-image cachegrind cachegrind-annotate
 
 all: native
@@ -110,6 +129,9 @@ $(TEST_IN):
 	IMAGE_ROWS=$(IMAGE_ROWS) IMAGE_COLS=$(IMAGE_COLS) \
 		python3 scripts/prepare_test_image.py "$(SAMPLE)" "$(TEST_IN)"
 
-clean:
+# Drop binaries only. Use between suite configs so metrics/cachegrind is kept.
+clean-bin:
 	rm -f $(TARGET) $(TARGET)_aarch64 image_output_*.data image_echo_*.data
+
+clean: clean-bin
 	rm -rf metrics/cachegrind

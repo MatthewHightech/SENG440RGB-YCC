@@ -16,6 +16,9 @@ make prepare-test-image
 
 # Full baseline: wall-time + instruction/cache metrics
 make measure LABEL=baseline
+
+# Or run the full multi-config suite (small + large, several routines)
+./run_full_suite.sh
 ```
 
 Results go in:
@@ -36,7 +39,35 @@ make prepare-test-image LARGE=1
 make measure LARGE=1 LABEL=large_baseline ITERS=50
 ```
 
-Always `make clean` when switching `LARGE`, because array sizes are compile-time.
+Always rebuild when switching `LARGE` or routine overrides (`RGB_ROUTINE` /
+`YCC_ROUTINE`), because those are compile-time. `./run_full_suite.sh` does
+`make clean-bin` between cases so metrics are kept while binaries are reset.
+
+## Full suite (`run_full_suite.sh`)
+
+On the ARM VM (needs Valgrind for Cachegrind):
+
+```bash
+cd src/full_conversion
+chmod +x run_full_suite.sh   # once
+./run_full_suite.sh
+```
+
+Runs wall-time + Cachegrind for both image sizes with downsample/upsample **2**:
+
+| Label | RGB routine | YCC routine | Size |
+|-------|-------------|-------------|------|
+| `baseline` / `baseline_large` | 2 (int) | 2 (int) | 64×48 / 640×480 |
+| `lut_no_neon` / `*_large` | 5 (LUT) | 2 (int) | both |
+| `round_trip_neon` / `*_large` | 6 (neon_v2) | 4 (neon_v3) | both |
+| `neon_tiled` / `*_large` | 4 (tiled NEON) | 4 (neon_v3) | both |
+
+Optional env:
+
+```bash
+ITERS_SMALL=500 ITERS_LARGE=20 ./run_full_suite.sh
+SKIP_CACHEGRIND=1 ./run_full_suite.sh   # wall-time only
+```
 
 ## Make commands
 
