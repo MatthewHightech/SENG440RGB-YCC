@@ -1,1 +1,3 @@
 timestamp,label,cachegrind_file,Ir,I1mr,Dr,Dw,D1mr,D1mw,DLmr,DLmw,D1_misses,LL_misses,Ir_CSC_YCC_to_RGB,Ir_chrominance_array_upsample,Ir_CSC_RGB_to_YCC
+2026-08-09T13:10:32,small_baseline,metrics/cachegrind/small_baseline-20260809-131028.out,1183522,1606,344635,199217,2991,1453,1224,624,4444,1848,193990,0,261954
+2026-08-09T13:15:08,large_baseline,metrics/cachegrind/large_baseline-20260809-131459.out,96267687,1630,29112831,16350786,204399,163790,151200,122407,368189,273607,17943324,0,22618342

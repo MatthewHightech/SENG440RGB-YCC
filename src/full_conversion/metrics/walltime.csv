@@ -1,1 +1,3 @@
 timestamp,label,input,rows,cols,rgb_to_ycc_routine,ycc_to_rgb_routine,downsample_mode,upsample_mode,iterations,rgb_to_ycc_ms_mean,ycc_to_rgb_ms_mean,ycc_to_rgb_ms_min,total_ms_mean,mpix_per_s,ns_per_pixel,diff_max,mean_abs_delta
+2026-08-09T13:10:28,small_baseline,testimages/input.ppm,64,48,2,2,2,2,1000,0.048608,0.050453,0.045997,0.099061,60.888797,16.423,113,4.916667
+2026-08-09T13:14:59,large_baseline,testimages/input_640x480.ppm,640,480,2,2,2,2,50,4.539747,4.593842,4.376708,9.133589,66.872127,14.954,198,1.857064
