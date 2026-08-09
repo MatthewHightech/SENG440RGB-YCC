@@ -33,7 +33,7 @@
 //     5 for CSC_RGB_to_YCC_lut()
 //     6 for CSC_RGB_to_YCC_neon_v2()
 #ifndef RGB_to_YCC_ROUTINE
-#define RGB_to_YCC_ROUTINE 2
+#define RGB_to_YCC_ROUTINE 5
 #endif
 
 // YCC_to_RGB_ROUTINE
