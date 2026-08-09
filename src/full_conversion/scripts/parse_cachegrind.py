@@ -38,6 +38,7 @@ FOCUS_FUNCS = (
     "CSC_YCC_to_RGB_brute_force_float",
     "CSC_YCC_to_RGB_neon_v2",
     "CSC_YCC_to_RGB_neon_v3",
+    "CSC_YCC_to_RGB_neon_fused",
     "chrominance_array_upsample",
     "chrominance_upsample",
     "CSC_RGB_to_YCC",
