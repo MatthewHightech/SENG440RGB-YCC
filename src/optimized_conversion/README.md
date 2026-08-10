@@ -1,4 +1,4 @@
-# Full RGB ↔ YCC conversion (merged)
+# Full RGB ↔ YCC optimized conversion
 
 Combines partner RGB→YCC optimizations with YCC→RGB fixes/opts, plus the
 PPM harness and Cachegrind/wall-time profiling suite.
