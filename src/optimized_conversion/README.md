@@ -61,7 +61,6 @@ Runs wall-time + Cachegrind for both image sizes with downsample/upsample **2**:
 | `lut_no_neon` / `*_large` | 5 (LUT) | 2 (int) | both |
 | `neon` / `*_large` | 6 (neon_v2) | 4 (neon_v3) | both |
 | `neon_tiled` / `*_large` | 4 (tiled NEON) | 4 (neon_v3) | both |
-| `neon_fused` / `*_large` | 6 (neon_v2) | 5 (NEON fused upsample) | both |
 
 Optional env:
 

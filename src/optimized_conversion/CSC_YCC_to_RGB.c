@@ -30,10 +30,6 @@ static void CSC_YCC_to_RGB_neon_v2( void);
 
 // =======
 static void CSC_YCC_to_RGB_neon_v3( void);
-
-// =======
-// NEON convert with on-the-fly chroma upsample (no Cb_temp/Cr_temp fill).
-static void CSC_YCC_to_RGB_neon_fused( void);
 #endif
 
 // =======
@@ -301,7 +297,7 @@ static void CSC_YCC_to_RGB_neon_v2( void) {
 // int32x4_t instead of int16_t -- split each 8-lane value into low/high
 // halves so it's still 4-wide per instruction, just fed by 8-wide loads.
 //
-// Shared by neon_v3 (reads Cb_temp/Cr_temp) and neon_fused (in-register chroma).
+// Used by neon_v3 (reads Cb_temp/Cr_temp).
 static void neon_ycc_to_rgb_strip(
     uint8_t *R_dst, uint8_t *G_dst, uint8_t *B_dst,
     const uint8_t *Y_src, uint8x8_t cb8, uint8x8_t cr8) {
@@ -492,98 +488,11 @@ static void chrominance_array_upsample( void) {
 
 } // END of chrominance_array_upsample()
 
-#ifdef CSC_HAVE_NEON
-// Expand one half-res chroma sample into a full-res 2x2 using the same rules
-// as chrominance_array_upsample() (including right/bottom/corner edges).
-static void fuse_upsample_2x2(
-    const uint8_t C[IMAGE_ROW_SIZE >> 1][IMAGE_COL_SIZE >> 1],
-    int hr, int hc,
-    uint8_t *o00, uint8_t *o01, uint8_t *o10, uint8_t *o11) {
-
-  const int hr_last = (IMAGE_ROW_SIZE >> 1) - 1;
-  const int hc_last = (IMAGE_COL_SIZE >> 1) - 1;
-  uint8_t c00, c01, c10, c11;
-  uint8_t top, left, middle;
-
-  if( hr == hr_last && hc == hc_last) {
-    c00 = C[hr][hc];
-    *o00 = c00;
-    *o01 = c00;
-    *o10 = c00;
-    *o11 = c00;
-    return;
-  }
-
-  c00 = C[hr][hc];
-  if( hr == hr_last) {
-    c01 = C[hr][hc + 1];
-    c10 = c00;
-    c11 = c01;
-  } else if( hc == hc_last) {
-    c01 = c00;
-    c10 = C[hr + 1][hc];
-    c11 = c10;
-  } else {
-    c01 = C[hr][hc + 1];
-    c10 = C[hr + 1][hc];
-    c11 = C[hr + 1][hc + 1];
-  }
-
-  chrominance_upsample( c00, c01, c10, c11, &top, &left, &middle);
-  *o00 = c00;
-  *o01 = top;
-  *o10 = left;
-  *o11 = middle;
-}
-
-// Build an 8-pixel even/odd chroma strip for full-res rows (2*hr) / (2*hr+1)
-// starting at full-res column `col` (multiple of 8).
-static void fuse_upsample_strip8(
-    const uint8_t C[IMAGE_ROW_SIZE >> 1][IMAGE_COL_SIZE >> 1],
-    int hr, int col,
-    uint8_t even[8], uint8_t odd[8]) {
-
-  int i;
-  for( i = 0; i < 4; i++) {
-    fuse_upsample_2x2(
-        C, hr, (col >> 1) + i,
-        &even[i * 2 + 0], &even[i * 2 + 1],
-        &odd[i * 2 + 0],  &odd[i * 2 + 1]);
-  }
-}
-
-// =======
-// NEON YCC->RGB with fused chroma upsample: no full-image Cb_temp/Cr_temp.
-// Uses the same 32-bit NEON MAC strip as neon_v3.
-static void CSC_YCC_to_RGB_neon_fused( void) {
-  int row, col;
-  uint8_t cb_even[8], cb_odd[8], cr_even[8], cr_odd[8];
-
-  for( row = 0; row < IMAGE_ROW_SIZE; row += 2) {
-    int hr = row >> 1;
-    for( col = 0; col < IMAGE_COL_SIZE; col += 8) {
-      fuse_upsample_strip8( Cb, hr, col, cb_even, cb_odd);
-      fuse_upsample_strip8( Cr, hr, col, cr_even, cr_odd);
-
-      neon_ycc_to_rgb_strip(
-          &R[row][col], &G[row][col], &B[row][col],
-          &Y[row][col],
-          vld1_u8( cb_even), vld1_u8( cr_even));
-      neon_ycc_to_rgb_strip(
-          &R[row + 1][col], &G[row + 1][col], &B[row + 1][col],
-          &Y[row + 1][col],
-          vld1_u8( cb_odd), vld1_u8( cr_odd));
-    }
-  }
-} // END of CSC_YCC_to_RGB_neon_fused()
-#endif // CSC_HAVE_NEON
-
 // =======
 void CSC_YCC_to_RGB( void) {
   int row, col; // indices for row and column
 
   // Expand half-res Cb/Cr once for routines that read Cb_temp/Cr_temp.
-  // Routine 5 fuses upsample into the convert loop (no temp fill).
   if( YCC_to_RGB_ROUTINE == 1 || YCC_to_RGB_ROUTINE == 2 ||
       YCC_to_RGB_ROUTINE == 3 || YCC_to_RGB_ROUTINE == 4) {
     chrominance_array_upsample();
@@ -596,10 +505,6 @@ void CSC_YCC_to_RGB( void) {
   }
   if( YCC_to_RGB_ROUTINE == 4) {
     CSC_YCC_to_RGB_neon_v3();
-    return;
-  }
-  if( YCC_to_RGB_ROUTINE == 5) {
-    CSC_YCC_to_RGB_neon_fused();
     return;
   }
 #endif

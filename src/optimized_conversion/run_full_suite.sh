@@ -99,7 +99,7 @@ echo "  mode:           $(measure_cmd)"
 echo "  wall CSV:       metrics/walltime.csv"
 echo "  cachegrind CSV: metrics/cachegrind.csv"
 echo
-echo "Labels: baseline, lut_no_neon, neon, neon_tiled, neon_fused"
+echo "Labels: baseline, lut_no_neon, neon, neon_tiled"
 echo "        (+ _large suffix for 640x480 runs)"
 
 # ---- 64x48 ----
@@ -107,14 +107,12 @@ run_case 0 baseline     2 2 "$ITERS_SMALL"
 run_case 0 lut_no_neon  5 2 "$ITERS_SMALL"
 run_case 0 neon         6 4 "$ITERS_SMALL"
 run_case 0 neon_tiled   4 4 "$ITERS_SMALL"
-run_case 0 neon_fused   6 5 "$ITERS_SMALL"
 
 # ---- 640x480 ----
 run_case 1 baseline_large     2 2 "$ITERS_LARGE"
 run_case 1 lut_no_neon_large  5 2 "$ITERS_LARGE"
 run_case 1 neon_large         6 4 "$ITERS_LARGE"
 run_case 1 neon_tiled_large   4 4 "$ITERS_LARGE"
-run_case 1 neon_fused_large   6 5 "$ITERS_LARGE"
 
 # Drop the last binary so the next manual build cannot accidentally reuse
 # the final suite's -D flags without a rebuild.

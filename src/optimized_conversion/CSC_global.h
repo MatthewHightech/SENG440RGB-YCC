@@ -41,7 +41,6 @@
 //     2 for CSC_YCC_to_RGB_brute_force_int()
 //     3 for CSC_YCC_to_RGB_neon_v2() -- ARM-only, overflows (see .c)
 //     4 for CSC_YCC_to_RGB_neon_v3() -- ARM-only, fixed version
-//     5 for CSC_YCC_to_RGB_neon_fused() -- NEON + fused chroma upsample
 #ifndef YCC_to_RGB_ROUTINE
 #define YCC_to_RGB_ROUTINE 2
 #endif
