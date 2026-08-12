@@ -57,7 +57,22 @@ LABEL    ?= baseline
 ITERS    ?= 1000
 
 .PHONY: all native native-profile arm deploy clean clean-bin test bench measure \
-        prepare-test-image cachegrind cachegrind-annotate
+        prepare-test-image cachegrind cachegrind-annotate asm
+
+# Assembly listings for the report (course toolchain + flags).
+# Compiling with the routine pinned via -D makes GCC constant-fold the
+# dispatch and inline that kernel, so each .s file IS that variant.
+CC_ASM    ?= arm-none-linux-gnueabihf-gcc
+ASM_FLAGS  = -march=armv7-a -mfpu=neon -mfloat-abi=hard -Wall
+
+asm:
+	mkdir -p asm
+	$(CC_ASM) $(ASM_FLAGS) -O0 -DRGB_to_YCC_ROUTINE=6 -S CSC_RGB_to_YCC.c -o asm/rgb2ycc_neon_v2_O0.s
+	$(CC_ASM) $(ASM_FLAGS) -O2 -DRGB_to_YCC_ROUTINE=6 -S CSC_RGB_to_YCC.c -o asm/rgb2ycc_neon_v2_O2.s
+	$(CC_ASM) $(ASM_FLAGS) -O0 -DYCC_to_RGB_ROUTINE=4 -S CSC_YCC_to_RGB.c -o asm/ycc2rgb_neon_v3_O0.s
+	$(CC_ASM) $(ASM_FLAGS) -O2 -DYCC_to_RGB_ROUTINE=4 -S CSC_YCC_to_RGB.c -o asm/ycc2rgb_neon_v3_O2.s
+	$(CC_ASM) $(ASM_FLAGS) -O2 -DRGB_to_YCC_ROUTINE=2 -S CSC_RGB_to_YCC.c -o asm/rgb2ycc_int_O2.s
+	$(CC_ASM) $(ASM_FLAGS) -O2 -DYCC_to_RGB_ROUTINE=2 -S CSC_YCC_to_RGB.c -o asm/ycc2rgb_int_O2.s
 
 all: native
 
